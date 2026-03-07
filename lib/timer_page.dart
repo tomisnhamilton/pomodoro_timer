@@ -30,10 +30,20 @@ class _TimerPageState extends State<TimerPage> {
 
   @override
   Widget build(BuildContext context) {
+    final Color currentColor = _getModeColor(_logic.currentMode);
+    final Color nextColor = _getModeColor(_logic.nextMode);
+
+    // Blend them based on timer progress
+    final Color blendedColor = Color.lerp(
+      currentColor,
+      nextColor,
+      _logic.progress,
+    )!;
+
     return Scaffold(
       body: AnimatedContainer(
         duration: const Duration(milliseconds: 400),
-        color: _getModeColor(_logic.currentMode),
+        color: blendedColor,
         child: SafeArea(
           child: Column(
             children: [

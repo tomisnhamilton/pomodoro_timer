@@ -94,4 +94,26 @@ class TimerController extends ChangeNotifier {
 
     notifyListeners(); // Tell the UI to refresh the display
   }
+
+  TimerMode get nextMode {
+    if (currentMode == TimerMode.focus) {
+      return (pomodoroCount + 1) % 4 == 0
+          ? TimerMode.longBreak
+          : TimerMode.shortBreak;
+    }
+    return TimerMode.focus;
+  }
+
+  // Calculate progress from 0.0 to 1.0
+  double get progress {
+    int total =
+        (currentMode == TimerMode.focus
+            ? focusMins
+            : currentMode == TimerMode.shortBreak
+            ? shortBreakMins
+            : longBreakMins) *
+        60;
+    if (total == 0) return 0.0;
+    return 1.0 - (seconds / total); // 0.0 at start, 1.0 at end
+  }
 }
