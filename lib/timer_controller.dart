@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'models/timer_mode.dart';
+import 'services/notification_service.dart';
 
 class TimerController extends ChangeNotifier {
   Timer? _timer;
@@ -17,14 +18,21 @@ class TimerController extends ChangeNotifier {
   void toggleTimer() {
     if (isRunning) {
       _timer?.cancel();
+      NotificationService.cancelAll();
     } else {
+      NotificationService.scheduleNotification(
+        secondsFromNow: seconds,
+        title: "Time's Up!",
+        body: "Starting ${nextMode.label} now.",
+      );
+
       _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
         if (seconds > 0) {
           seconds--;
         } else {
           _autoSwitchMode();
         }
-        notifyListeners(); // This is the "setState" for controllers
+        notifyListeners();
       });
     }
     notifyListeners();
@@ -49,7 +57,6 @@ class TimerController extends ChangeNotifier {
     }
 
     if (total > 0) {
-      // Logic for saving based on current mode
       if (currentMode == TimerMode.focus) focusMins = total ~/ 60;
       if (currentMode == TimerMode.shortBreak) shortBreakMins = total ~/ 60;
       if (currentMode == TimerMode.longBreak) longBreakMins = total ~/ 60;
@@ -67,6 +74,12 @@ class TimerController extends ChangeNotifier {
     } else {
       currentMode = TimerMode.focus;
     }
+
+    /* NotificationService.showNotification(
+      title: "Time's Up!",
+      body: "Starting ${currentMode.label} now.",
+    );
+    */
     _resetSeconds();
   }
 
@@ -80,10 +93,20 @@ class TimerController extends ChangeNotifier {
         60;
   }
 
-  void restartTimer() {
-    _timer?.cancel(); // Stop the heartbeat
+  void subtractSeconds(int secondsToSubtract) {
+    if (!isRunning) return;
 
-    // Reset seconds based on the current mode's duration
+    if (seconds > secondsToSubtract) {
+      seconds -= secondsToSubtract;
+    } else {
+      _autoSwitchMode();
+    }
+    notifyListeners();
+  }
+
+  void restartTimer() {
+    _timer?.cancel();
+
     seconds =
         switch (currentMode) {
           TimerMode.focus => focusMins,
@@ -92,7 +115,7 @@ class TimerController extends ChangeNotifier {
         } *
         60;
 
-    notifyListeners(); // Tell the UI to refresh the display
+    notifyListeners();
   }
 
   TimerMode get nextMode {
@@ -104,7 +127,6 @@ class TimerController extends ChangeNotifier {
     return TimerMode.focus;
   }
 
-  // Calculate progress from 0.0 to 1.0
   double get progress {
     int total =
         (currentMode == TimerMode.focus
@@ -114,6 +136,6 @@ class TimerController extends ChangeNotifier {
             : longBreakMins) *
         60;
     if (total == 0) return 0.0;
-    return 1.0 - (seconds / total); // 0.0 at start, 1.0 at end
+    return 1.0 - (seconds / total);
   }
 }

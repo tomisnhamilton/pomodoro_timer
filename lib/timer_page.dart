@@ -9,15 +9,30 @@ class TimerPage extends StatefulWidget {
   State<TimerPage> createState() => _TimerPageState();
 }
 
-class _TimerPageState extends State<TimerPage> {
+class _TimerPageState extends State<TimerPage> with WidgetsBindingObserver {
   // Our logic is now a separate object we can talk to
   final TimerController _logic = TimerController();
+  DateTime? _backgroundTimestamp;
 
   @override
   void initState() {
     super.initState();
-    // When the controller says "I changed!", this page will rebuild
+    WidgetsBinding.instance.addObserver(this);
     _logic.addListener(() => setState(() {}));
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) {
+      // User just left the app
+      _backgroundTimestamp = DateTime.now();
+    } else if (state == AppLifecycleState.resumed) {
+      // User just came back!
+      if (_backgroundTimestamp != null && _logic.isRunning) {
+        final gap = DateTime.now().difference(_backgroundTimestamp!).inSeconds;
+        _logic.subtractSeconds(gap); // Tell the logic to "catch up"
+      }
+    }
   }
 
   Color _getModeColor(TimerMode mode) {

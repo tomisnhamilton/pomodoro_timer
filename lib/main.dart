@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
-import 'timer_page.dart'; // We must import our new file to use TimerPage
+import 'timer_page.dart';
+import 'services/notification_service.dart';
+import 'package:timezone/data/latest.dart' as tz;
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  tz.initializeTimeZones();
+  await NotificationService.init();
   runApp(const MyApp());
 }
 
@@ -13,7 +18,6 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Pomodoro Timer',
       theme: ThemeData(
-        // FIX: Added the ColorScheme class name before the static method
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
